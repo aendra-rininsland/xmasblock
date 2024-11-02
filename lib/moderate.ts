@@ -9,6 +9,11 @@ import { CommitCreateEvent } from "@skyware/jetstream";
 const { INFERENCE_PROMPT, BSKY_USERNAME, BSKY_PASSWORD } = process.env;
 const bot = new Bot();
 
+const loggedIn = bot.login({
+  identifier: BSKY_USERNAME!,
+  password: BSKY_PASSWORD!,
+});
+
 export const createLabel = async (
   post: CommitCreateEvent<"app.bsky.feed.post">,
   images: [string, { score: number; label: string }[]][]
@@ -29,6 +34,8 @@ export const createLabel = async (
     ...images.flatMap(([, img]) => img.map((d) => d.score))
   );
 
+  if (maxScore < 0.65) return;
+
   console.log(
     {
       reference,
@@ -38,22 +45,11 @@ export const createLabel = async (
     images
   );
 
-  return; // Comment out to actually label
-
-  if (!BSKY_PASSWORD || !BSKY_USERNAME) {
-    console.error("$BSKY_USERNAME or $BSKY_PASSWORD not set! Exiting...");
-    process.exit();
-  }
-
-  // TODO: reuse sessions
-  await bot.login({
-    identifier: BSKY_USERNAME!,
-    password: BSKY_PASSWORD!,
-  });
+  await loggedIn;
 
   return bot.label({
     reference,
-    labels: [INFERENCE_PROMPT!],
+    labels: ["xmas"],
     comment: `max-score: ${maxScore}`,
   });
 };
